@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bilgi Kapışması</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh; /* Sayfanın yüksekliği kadar boşluk bırak */
+            margin: 0;
+            background: linear-gradient(to right, #6a11cb 0%, #2575fc 100%); /* Canlı bir arka plan */
+            color: #333;
+        }
+
+        h1 {
+            color: #fff;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .container {
+            width: 90%; /* Daha geniş alana yayılma */
+            max-width: 700px; /* Maksimum genişlik */
+            padding: 30px;
+            background-color: #fff;
+            border-radius: 15px; /* Yuvarlak köşeler */
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2); /* Hafif gölge */
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            margin-top: 20px; /* Üstten boşluk */
+        }
+
+        #pul-bilgisi {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #28a745; /* Yeşil renk */
+            text-align: center;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+
+        #soru-alani {
+            font-size: 1.4em;
+            font-weight: bold;
+            padding: 15px;
+            background-color: #e0f7fa; /* Açık mavi arka plan */
+            border-radius: 8px;
+            text-align: center;
+            color: #0056b3;
+            min-height: 80px; /* Soru alanı için minimum yükseklik */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #cevap-secenekleri {
+            display: grid; /* Grid sistemi ile düzen */
+            grid-template-columns: 1fr 1fr; /* İki sütun */
+            gap: 10px; /* Boşluk */
+        }
+
+        #cevap-secenekleri button {
+            padding: 15px 20px;
+            font-size: 1.1em;
+            background-color: #007bff; /* Mavi butonlar */
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s ease; /* Hover efekti */
+        }
+
+        #cevap-secenekleri button:hover:not(:disabled) {
+            background-color: #0056b3; /* Koyu mavi hover */
+            transform: translateY(-2px); /* Hafif yukarı kalkma efekti */
+        }
+        
+        #cevap-secenekleri button:disabled {
+            background-color: #cccccc; /* Pasif buton rengi */
+            cursor: not-allowed;
+        }
+
+        #mesaj-alani {
+            margin-top: 15px;
+            font-weight: bold;
+            text-align: center;
+            min-height: 25px; /* Mesaj alanı için minimum yükseklik */
+        }
+
+        #satinalma-bolumu, #satma-bolumu { /* Satma bölümü de eklendi */
+            border-top: 1px dashed #ccc;
+            padding-top: 20px;
+            text-align: center;
+            margin-top: 20px;
+            background-color: #f8f9fa; /* Hafif gri arka plan */
+            border-radius: 10px;
+            padding: 20px;
+        }
+        
+        #satinalma-bolumu h3, #satma-bolumu h3 {
+            color: #007bff;
+            margin-bottom: 15px;
+        }
+
+        #satinalma-bolumu button, #satma-bolumu button {
+            padding: 10px 15px;
+            margin: 5px;
+            cursor: pointer;
+            background-color: #28a745; /* Yeşil butonlar */
+            color: white;
+            border: none;
+            border-radius: 5px;
+            transition: background-color 0.3s ease;
+        }
+
+        #satinalma-bolumu button:hover, #satma-bolumu button:hover {
+            background-color: #218838; /* Koyu yeşil hover */
+        }
+        
+        /* Responsive Düzenleme */
+        @media (max-width: 600px) {
+            #cevap-secenekleri {
+                grid-template-columns: 1fr; /* Küçük ekranlarda tek sütun */
+            }
+            .container {
+                width: 95%;
+                padding: 20px;
+            }
+        }
+        /* YENİ EKLENEN CSS KODLARI (Buton renkleri) */
+        #cevap-secenekleri button.dogru {
+            background-color: #28a745; /* Yeşil */
+            color: white; /* Metin rengi beyaz */
+        }
+
+        #cevap-secenekleri button.yanlis {
+            background-color: #dc3545; /* Kırmızı */
+            color: white; /* Metin rengi beyaz */
+        }
+    </style>
+</head>
+<body>
+    <h1>Bilgi Kapışması</h1>
+    <audio id="dogruSes" src="correct.mp3" preload="auto"></audio>
+    <audio id="yanlisSes" src="wrong.mp3" preload="auto"></audio>
+    <audio id="sureBittiSes" src="timeout.mp3" preload="auto"></audio>
+    <div class="container">
+        <div id="pul-bilgisi">Puan: 0 Pul</div>
+        <div id="zamanlayici-alani" style="font-size: 1.2em; font-weight: bold; text-align: center; color: #dc3545;">Süre: 15</div>
+        <div id="soru-alani">Soru buraya gelecek...</div>
+        <div id="cevap-secenekleri">
+            <button data-cevap="A">A</button>
+            <button data-cevap="B">B</button>
+            <button data-cevap="C">C</button>
+            <button data-cevap="D">D</button>
+        </div>
+        <div id="mesaj-alani"></div>
+    </div>
+
+    <div id="satinalma-bolumu">
+        <h3>Pul Satın Al</h3>
+        <button data-pul="5">5 Pul (6 TL)</button>
+        <button data-pul="10">10 Pul (12 TL)</button>
+        <button data-pul="20">20 Pul (24 TL)</button>
+    </div>
+
+    <div id="satma-bolumu">
+        <h3>Pul Sat</h3>
+        <button>5 Pul (4 TL)</button>
+        <button>10 Pul (8 TL)</button>
+    </div>
+
+    <div id="oyun-sonu-bolumu" style="display: none; margin-top: 30px; text-align: center; background-color: #e6ffe6; padding: 25px; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.1);">
+        <h2 style="color: #28a745; font-size: 2em;">Oyun Bitti!</h2>
+        <p id="son-pul-bilgisi" style="font-size: 1.5em; font-weight: bold; color: #333; margin-top: 15px;"></p>
+        <button id="tekrar-oyna-butonu" style="margin-top: 25px; padding: 12px 25px; font-size: 1.2em; background-color: #007bff; color: white; border: none; border-radius: 8px; cursor: pointer; transition: background-color 0.3s ease;">Tekrar Oyna</button>
+    </div>
+
+    <script>	
+        const pulBilgisiElementi = document.getElementById('pul-bilgisi');
+        const soruAlaniElementi = document.getElementById('soru-alani');
+        const cevapButonlari = document.querySelectorAll('#cevap-secenekleri button');
+        const mesajAlaniElementi = document.getElementById('mesaj-alani');
+        const satinAlmaButonlari = document.querySelectorAll('#satinalma-bolumu button');
+        const satmaButonlari = document.querySelectorAll('#satma-bolumu button');
+        const zamanlayiciAlaniElementi = document.getElementById('zamanlayici-alani');
+        const oyunSonuBolumu = document.getElementById('oyun-sonu-bolumu');
+        const sonPulBilgisi = document.getElementById('son-pul-bilgisi');
+        const tekrarOynaButonu = document.getElementById('tekrar-oyna-butonu');
+
+        // Ses elementleri tanımlamaları
+        const dogruSes = document.getElementById('dogruSes');
+        const yanlisSes = document.getElementById('yanlisSes');
+        const sureBittiSes = document.getElementById('sureBittiSes');
+
+        let zamanlayici;
+        let kalanSure = 15; // Başlangıç süresi (saniye)
+        const MAX_SURE = 15; // Maksimum süre (saniye)
+
+        let mevcutSoru;
+        let pul = 0; // Başlangıçta pul 0 olacak
+        let dogruCevapSayisi = 0;
+        let yanlisCevapSayisi = 0;
+        const sorular = [
+            {
+                soru: "Türkiye'nin başkenti neresidir?",
+                cevaplar: ["Ankara", "İstanbul", "İzmir", "Bursa"],
+                dogruCevap: "Ankara",
+                pulMaliyeti: 3
+            },
+            {
+                soru: "Türkiye'nin en kalabalık şehri neresidir?",
+                cevaplar: ["İstanbul", "Ankara", "İzmir", "Antalya"],
+                dogruCevap: "İstanbul",
+                pulMaliyeti: 5
+            },
+            {
+                soru: "Türkiye'nin en yüksek dağı hangisidir?",
+                cevaplar: ["Ağrı Dağı", "Erciyes Dağı", "Kaçkar Dağları", "Uludağ"],
+                dogruCevap: "Ağrı Dağı",
+                pulMaliyeti: 4
+            },
+            {
+                soru: "Hangi şehir 'Ege'nin İncisi' olarak bilinir?",
+                cevaplar: ["İzmir", "Muğla", "Aydın", "Denizli"],
+                dogruCevap: "İzmir",
+                pulMaliyeti: 3
+            },
+            {
+                soru: "İlk Türk devletinin adı nedir?",
+                cevaplar: ["Göktürk Kağanlığı", "Büyük Selçuklu İmparatorluğu", "Osmanlı İmparatorluğu", "Türkiye Cumhuriyeti"],
+                dogruCevap: "Göktürk Kağanlığı",
+                pulMaliyeti: 5
+            }
+            // Daha fazla soru eklenebilir
+        ];
+
+        function pulGuncelle() {
+            pulBilgisiElementi.textContent = `Puan: ${pul} Pul`;
+        }
+
+        function zamanlayiciyiBaslat() {
+            clearInterval(zamanlayici); // Önceki zamanlayıcıyı temizle (varsa)
+            kalanSure = MAX_SURE; // Süreyi sıfırla
+            zamanlayiciAlaniElementi.textContent = `Süre: ${kalanSure}`; // Zamanlayıcıyı güncelle
+
+            zamanlayici = setInterval(() => {
+                kalanSure--;
+                zamanlayiciAlaniElementi.textContent = `Süre: ${kalanSure}`;
+
+                if (kalanSure <= 0) {
+                    clearInterval(zamanlayici); // Süre bittiğinde zamanlayıcıyı durdur
+                    mesajAlaniElementi.textContent = "Süre bitti! Yanlış cevap.";
+                    if (sureBittiSes) sureBittiSes.play(); // Süre bittiğinde sesi çal
+                    
+                    if (mevcutSoru) { // Bu 'if' fazlalığı kaldırıldı
+                        pul -= mevcutSoru.pulMaliyeti; 
+                        pulGuncelle();
+                        const soruIndex = sorular.indexOf(mevcutSoru);
+                        if (soruIndex > -1) {
+                            sorular.splice(soruIndex, 1);
+                        }
+                    }
+                    setTimeout(soruYukle, 2000); // 2 saniye sonra yeni soru yükle
+                }
+            }, 1000); // Her 1 saniyede bir güncelle
+        }
+
+        function soruYukle() {
+            if (sorular.length > 0) {
+                const rastgeleSoruIndex = Math.floor(Math.random() * sorular.length);
+                mevcutSoru = sorular[rastgeleSoruIndex];
+                soruAlaniElementi.textContent = mevcutSoru.soru;
+                for (let i = 0; i < cevapButonlari.length; i++) {
+                    cevapButonlari[i].textContent = mevcutSoru.cevaplar[i];
+                    cevapButonlari[i].dataset.cevap = mevcutSoru.cevaplar[i]; 
+                    cevapButonlari[i].disabled = false; // Butonları tekrar aktif hale getir
+                }
+                mesajAlaniElementi.textContent = ""; 
+                zamanlayiciyiBaslat(); 
+            } else {
+                // Oyun alanını gizle
+                document.querySelector('.container').style.display = 'none'; 
+                document.getElementById('satinalma-bolumu').style.display = 'none'; 
+                document.getElementById('satma-bolumu').style.display = 'none'; 
+                zamanlayiciAlaniElementi.style.display = 'none'; 
+
+                // Oyun sonu bölümünü göster
+                oyunSonuBolumu.style.display = 'block';
+                sonPulBilgisi.textContent = `Toplamda ${pul} pul ile oyunu tamamladınız!`;
+                clearInterval(zamanlayici); 
+
+                // BURADAKİ SATIRI DÜZELTTİM
+                const istatistikMetni = document.createElement('p');
+                istatistikMetni.style.fontSize = '1.2em';
+                istatistikMetni.style.color = '#555';
+                istatistikMetni.innerHTML = `Doğru Cevap: <span style="color: green; font-weight: bold;">${dogruCevapSayisi}</span><br>Yanlış Cevap: <span style="color: red; font-weight: bold;">${yanlisCevapSayisi}</span>`;
+                oyunSonuBolumu.appendChild(istatistikMetni);
+            }
+        }
+
+        function cevabiKontrolEt(secilenCevap) {
+            if (!mevcutSoru) {
+                mesajAlaniElementi.textContent = "Oyun bitti, yeni soru yok.";
+                return;
+            }
+
+            // Yeterli pul kontrolü
+            if (pul < mevcutSoru.pulMaliyeti) {
+                mesajAlaniElementi.textContent = `Bu soruyu oynamak için ${mevcutSoru.pulMaliyeti} pul gerekiyor. Yeterli pulunuz yok.`;
+                setTimeout(() => mesajAlaniElementi.textContent = "", 2000);
+                return;
+            }
+
+            clearInterval(zamanlayici); // Zamanlayıcıyı durdur
+
+            // Tüm cevap butonlarını devre dışı bırak, tekrar tıklanmasın
+            cevapButonlari.forEach(button => {
+                button.disabled = true;
+            });
+
+            pul -= mevcutSoru.pulMaliyeti; // Pul düşüşü
+            pulGuncelle(); // Pul bilgisini güncelle
+
+            // Doğru ve seçilen butonları bul
+            const dogruCevapButonu = Array.from(cevapButonlari).find(
+                button => button.dataset.cevap === mevcutSoru.dogruCevap
+            );
+            const secilenCevapButonu = Array.from(cevapButonlari).find(
+                button => button.textContent === secilenCevap // Butonun görünen metnine göre buluyoruz
+            );
+
+            if (secilenCevap === mevcutSoru.dogruCevap) {
+                dogruCevapSayisi++; // Doğru cevap sayısını artır
+                mesajAlaniElementi.textContent = "Doğru cevap! +2 Pul";
+                pul += 2; // Pul ekle
+                if (dogruSes) dogruSes.play(); // Doğru sesini çal
+                if (secilenCevapButonu) {
+                    secilenCevapButonu.classList.add('dogru'); // Seçilen butonu yeşil yap
+                }
+            } else {
+                yanlisCevapSayisi++; // Yanlış cevap sayısını artır
+                mesajAlaniElementi.textContent = `Yanlış cevap! Doğru cevap: ${mevcutSoru.dogruCevap}`;
+                if (yanlisSes) yanlisSes.play(); // Yanlış sesini çal
+                if (secilenCevapButonu) {
+                    secilenCevapButonu.classList.add('yanlis'); // Seçilen butonu kırmızı yap
+                }
+                if (dogruCevapButonu) {
+                    dogruCevapButonu.classList.add('dogru'); // Doğru cevabı yeşil yap (bilgilendirme için)
+                }
+            }
+            pulGuncelle(); // Pul bilgisini tekrar güncelle
+
+            // Soruyu listeden çıkar
+            const soruIndex = sorular.indexOf(mevcutSoru);
+            if (soruIndex > -1) {
+                sorular.splice(soruIndex, 1);
+            }
+
+            // 2 saniye sonra renkleri sıfırla ve yeni soruyu yükle
+            setTimeout(() => {
+                cevapButonlari.forEach(button => {
+                    button.classList.remove('dogru', 'yanlis'); // Renkleri kaldır
+                });
+                soruYukle(); // Yeni soruyu yükle
+            }, 2000);
+        }
+
+        cevapButonlari.forEach(button => {
+            button.addEventListener('click', function() {
+                cevabiKontrolEt(this.textContent); 
+            });
+        });
+
+        satinAlmaButonlari.forEach(button => {
+            button.addEventListener('click', function() {
+                const alinacakPul = parseInt(this.dataset.pul);
+                let maliyet;
+                if (alinacakPul === 5) maliyet = 6;
+                else if (alinacakPul === 10) maliyet = 12;
+                else if (alinacakPul === 20) maliyet = 24;
+                else maliyet = alinacakPul * 1.2; 
+
+                alert(`Başarıyla ${alinacakPul} pul satın alındı! (Maliyet: ${maliyet.toFixed(2)} TL - Simülasyon)`);
+                pul += alinacakPul;
+                pulGuncelle();
+            });
+        });
+
+        satmaButonlari.forEach(button => {
+            button.addEventListener('click', function() {
+                const satilacakPul = parseInt(this.textContent.split(' ')[0]);
+                let kazanc;
+                if (satilacakPul === 5) kazanc = 4;
+                else if (satilacakPul === 10) kazanc = 8;
+                else kazanc = satilacakPul * 0.8; 
+
+                if (pul >= satilacakPul) {
+                    pul -= satilacakPul;
+                    pulGuncelle();
+                    alert(`Başarıyla ${satilacakPul} pul sattınız! (Kazanç: ${kazanc.toFixed(2)} TL - Simülasyon)`);
+                } else {
+                    mesajAlaniElementi.textContent = "Yeterli pulunuz yok.";
+                    setTimeout(() => mesajAlaniElementi.textContent = "", 2000); 
+                }
+            });
+        });
+
+        tekrarOynaButonu.addEventListener('click', function() {
+            location.reload(); 
+        });
+
+        // Oyun başladığında ilk soruyu yükle
+        soruYukle();
+        pulGuncelle();
+    </script>
+</body>
+</html>
